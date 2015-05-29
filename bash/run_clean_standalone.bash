@@ -43,7 +43,8 @@ df -h
 
 # Run the clean pipeline
 # run casapy
-casapy --nologger  --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_clean.py
+#casapy --nologger --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_clean.py
+python2.7 /home/ec2-user/chiles_pipeline/python/launch_trace2.py casapy --nologger --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_clean.py
 
 # Log the disk usage
 df -h

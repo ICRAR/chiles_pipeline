@@ -170,7 +170,7 @@ def main():
         'Kevin',
         'Standalone Clean',
         AWS_INSTANCES.get('r3.4xlarge'),
-        '0.80')
+        '2.00')
 
 if __name__ == "__main__":
     main()

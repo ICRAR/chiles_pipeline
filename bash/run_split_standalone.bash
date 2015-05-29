@@ -12,8 +12,8 @@
 # after the instance is running
 sleep 10
 while [ ! -b "/dev/xvdf" ]; do
-  echo Sleeping
-  sleep 30
+    echo Sleeping
+    sleep 30
 done
 
 # Now mount the data disk
@@ -40,7 +40,8 @@ export HOME=/home/ec2-user
 export USER=root
 
 # run casapy
-casapy --nologger  --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_split.py
+#casapy --nologger  --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_split.py
+python2.7 /home/ec2-user/chiles_pipeline/python/launch_trace2.py casapy --nologger  --log2term --logfile casapy.log  -c /home/ec2-user/chiles_pipeline/standalone/standalone_split.py
 
 # Log the disk usage
 df -h
