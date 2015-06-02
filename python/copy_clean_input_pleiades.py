@@ -29,7 +29,6 @@ import argparse
 from contextlib import closing
 import logging
 import os
-from os.path import join
 import shutil
 import sys
 import tarfile
@@ -42,7 +41,14 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)-15s:' + logging.BASIC_FORMAT)
 
 LOG.info('PYTHONPATH = {0}'.format(sys.path))
+#DIRECTORY = '/tmp/kevin/split_vis'
 DIRECTORY = '/mnt/hidata/kevin/split_vis'
+
+
+class KeyData:
+    def __init__(self, key, tail):
+        self.key = key
+        self.tail = tail
 
 
 def copy_files(frequency_id):
@@ -50,35 +56,42 @@ def copy_files(frequency_id):
     bucket = s3_helper.get_bucket(CHILES_BUCKET_NAME)
     LOG.info('Scanning bucket: {0}, frequency_id: {1}'.format(bucket, frequency_id))
 
+    file_list = {}
     for key in bucket.list(prefix='CVEL/{0}'.format(frequency_id)):
         LOG.info('Checking {0}'.format(key.key))
         # Ignore the key
         if key.key.endswith('/data.tar.gz') or key.key.endswith('/data.tar'):
-            elements = key.key.split('/')
-            directory = '{1}/{0}/'.format(elements[2], DIRECTORY)
+            (head, tail) = os.path.split(key.key)
+            element = file_list.get(head)
+            if element is None:
+                file_list[head] = KeyData(key, tail)
+            elif tail.endswith('data.tar'):
+                file_list[head] = KeyData(key, tail)
 
+    for head, tail in file_list.iteritems():
             # Queue the copy of the file
-            tar_file = os.path.join(directory, 'data.tar.gz' if key.key.endswith('/data.tar.gz') else 'data.tar')
-            corrected_path = join(directory, frequency_id)
+            elements = head.split('/')
+            directory = '{0}/{1}/{2}/'.format(DIRECTORY, frequency_id, elements[2])
+            tar_file = os.path.join(directory, 'data.tar.gz' if tail.tail.endswith('data.tar.gz') else 'data.tar')
             # noinspection PyBroadException
             try:
                 LOG.info('key: {0}, tar_file: {1}, directory: {2}, frequency_id: {3}'.format(
-                    key.key,
+                    tail.key.key,
                     tar_file,
                     directory,
                     frequency_id))
-                if os.path.exists(corrected_path):
-                    LOG.info('Corrected_path already exists: {0}'.format(corrected_path))
+                if os.path.exists(directory):
+                    LOG.info('directory already exists: {0}'.format(directory))
                 else:
-                    os.makedirs(corrected_path)
-                    key.get_contents_to_filename(tar_file)
+                    os.makedirs(directory)
+                    tail.key.get_contents_to_filename(tar_file)
                     with closing(tarfile.open(tar_file, "r:gz" if tar_file.endswith('tar.gz') else "r:")) as tar:
-                        tar.extractall(path=corrected_path)
+                        tar.extractall(path=directory)
 
                     os.remove(tar_file)
             except Exception:
                 LOG.exception('Task died')
-                shutil.rmtree(corrected_path, ignore_errors=True)
+                shutil.rmtree(directory, ignore_errors=True)
 
 
 def command_pbs(args):
@@ -90,12 +103,11 @@ def command_pbs(args):
 
 
 def command_list(args):
-    LOG.info('{0}'.format(args))
+    # The id is the index
+    index = args.index
+
     expected_combinations = get_expect_combinations()
-    count = 0
-    for combination in expected_combinations:
-        LOG.info('{0} - {1}'.format(count, combination))
-        count += 1
+    copy_files(expected_combinations[index])
 
 
 def main():
@@ -107,6 +119,7 @@ def main():
     parser_pbs.set_defaults(func=command_pbs)
 
     parser_galaxy = subparsers.add_parser('list', help='list help')
+    parser_galaxy.add_argument('index', type=int, help='the index for the command line')
     parser_galaxy.set_defaults(func=command_list)
 
     args = parser.parse_args()
