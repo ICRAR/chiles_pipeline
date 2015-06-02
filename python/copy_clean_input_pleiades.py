@@ -40,8 +40,10 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)-15s:' + logging.BASIC_FORMAT)
 
 LOG.info('PYTHONPATH = {0}'.format(sys.path))
-DIRECTORY = '/tmp/kevin/split_vis'
-# DIRECTORY = '/scratch/kevin/split_vis'
+if os.path.exists('/scratch'):
+    DIRECTORY = '/scratch/kevin/split_vis'
+else:
+    DIRECTORY = '/tmp/kevin/split_vis'
 
 
 class KeyData:
