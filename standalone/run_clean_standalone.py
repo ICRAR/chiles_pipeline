@@ -163,7 +163,8 @@ def main():
     start_servers(
         1,
         'ami-3f0e7d05',
-        get_script('run_clean_standalone.bash'),
+        #get_script('run_clean_standalone.bash'),
+        get_script('run_clean_standalone_strace.bash'),
         get_script(BASH_SCRIPT_SETUP_DISKS),
         'r3.4xlarge',
         ['vis_1136~1140'],

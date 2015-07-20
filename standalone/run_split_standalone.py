@@ -97,7 +97,8 @@ def start_servers(
 def main():
     start_servers(
         'ami-3f0e7d05',
-        get_script('run_split_standalone.bash'),
+        #get_script('run_split_standalone.bash'),
+        get_script('run_split_standalone_strace.bash'),
         get_script(BASH_SCRIPT_SETUP_DISKS),
         'r3.xlarge',
         '20131122_941_6',
