@@ -114,9 +114,10 @@ def upload_part_stream(aws_access_key_id, aws_secret_access_key, bucket_name, mu
                     break
         except Exception, exc:
             if retries_left:
+                LOGGER.exception('... Failed uploading part #{0} retries left {1}'.format(part_num, retries_left))
                 _upload(retries_left=retries_left - 1)
             else:
-                LOGGER.info('... Failed uploading part #{0}'.format(part_num))
+                LOGGER.exception('... Failed uploading part #{0}'.format(part_num))
                 raise exc
         else:
             LOGGER.info('... Uploaded part #{0}'.format(part_num))
@@ -246,6 +247,12 @@ class S3Helper:
         try:
             for entry in os.listdir(source_path):
                 full_filename = join(source_path, entry)
+                LOGGER.info(
+                    'tar: [full_filename: {0}, entry: {1}]'.format(
+                        full_filename,
+                        entry
+                    )
+                )
                 tar.add(full_filename, arcname=entry)
 
             tar.close()
