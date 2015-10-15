@@ -50,7 +50,9 @@ def copy_files(args):
             s3_helper.add_tar_to_bucket_multipart(
                 args.bucket,
                 '{0}/measurement_set.tar'.format(match),
-                result_dir)
+                result_dir,
+                parallel_processes=4
+            )
 
 
 def main():
