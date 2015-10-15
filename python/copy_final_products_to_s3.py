@@ -41,8 +41,8 @@ def copy_files(args):
     s3_helper = S3Helper(args.aws_access_key_id, args.aws_secret_access_key)
     # Look in the output directory
     for root, dir_names, filenames in os.walk(args.product_dir):
-        LOG.info('root: {0}, dir_names: {1}, filenames: {2}'.format(root, dir_names, filenames))
-        for match in fnmatch.filter(dir_names, '13B-266*.ms'):
+        LOG.debug('root: {0}, dir_names: {1}, filenames: {2}'.format(root, dir_names, filenames))
+        for match in fnmatch.filter(dir_names, '13B-266*calibrated_deepfield.ms'):
             result_dir = join(root, match)
             LOG.info('Working on: {0}'.format(result_dir))
             LOG.info('Copying to: {0}/{1}/measurement_set.tar'.format(args.bucket, match))
