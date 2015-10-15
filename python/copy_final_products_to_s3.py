@@ -44,13 +44,13 @@ def copy_files(args):
         LOG.debug('root: {0}, dir_names: {1}, filenames: {2}'.format(root, dir_names, filenames))
         for match in fnmatch.filter(dir_names, '13B-266*calibrated_deepfield.ms'):
             result_dir = join(root, match)
-            LOG.info('Working on: {0}'.format(result_dir))
+            LOG.info('result_dir: {0}'.format(result_dir))
             LOG.info('Copying to: {0}/{1}/measurement_set.tar'.format(args.bucket, match))
 
-            #s3_helper.add_tar_to_bucket_multipart(
-            #    args.bucket,
-            #    '{0}/measurement_set.tar'.format(vis_file, date),
-            #    result_dir)
+            s3_helper.add_tar_to_bucket_multipart(
+                args.bucket,
+                '{0}/measurement_set.tar'.format(match),
+                result_dir)
 
 
 def main():
