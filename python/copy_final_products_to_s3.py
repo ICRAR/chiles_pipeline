@@ -51,7 +51,7 @@ def copy_files(args):
                 args.bucket,
                 '{0}/measurement_set.tar'.format(match),
                 result_dir,
-                parallel_processes=4
+                parallel_processes=2
             )
 
 
