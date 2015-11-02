@@ -222,12 +222,13 @@ class S3Helper:
         Parallel multipart upload.
         """
         LOGGER.info(
-            'bucket_name: {0}, key_name: {1}, source_path: {2}, parallel_processes: {3}, reduced_redundancy: {4}'.format(
+            'bucket_name: {0}, key_name: {1}, source_path: {2}, parallel_processes: {3}, reduced_redundancy: {4}, bufsize: {5}'.format(
                 bucket_name,
                 key_name,
                 source_path,
                 parallel_processes,
-                reduced_redundancy
+                reduced_redundancy,
+                bufsize
             )
         )
         bucket = self.get_bucket(bucket_name)
@@ -240,7 +241,7 @@ class S3Helper:
             mode = "w|gz"
         else:
             mode = "w|"
-        tar = tarfile.open(mode=mode, fileobj=s3_feeder, bufsize=512*1024)
+        tar = tarfile.open(mode=mode, fileobj=s3_feeder, bufsize=int(bufsize / 10))
 
         complete = True
         # noinspection PyBroadException

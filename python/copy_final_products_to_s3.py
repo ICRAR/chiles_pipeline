@@ -28,35 +28,76 @@ Copy the final products to S3
 """
 import argparse
 import fnmatch
-import logging
 import os
 from os.path import join
+import multiprocessing
+import sys
+from common import Consumer, LOGGER
 from s3_helper import S3Helper
 
-LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format='%(asctime)-15s:' + logging.BASIC_FORMAT)
+PROCESSES = 4
+LOGGER.info('PYTHONPATH = {0}'.format(sys.path))
 
 
-def copy_files(args):
-    s3_helper = S3Helper(args.aws_access_key_id, args.aws_secret_access_key)
-    # Look in the output directory
-    for root, dir_names, filenames in os.walk(args.product_dir):
-        LOG.debug('root: {0}, dir_names: {1}, filenames: {2}'.format(root, dir_names, filenames))
-        for match in fnmatch.filter(dir_names, '13B-266*calibrated_deepfield.ms'):
-            result_dir = join(root, match)
-            LOG.info('result_dir: {0}'.format(result_dir))
-            LOG.info('Copying to: {0}/{1}/measurement_set.tar'.format(args.bucket, match))
+class CopyTask(object):
+    def __init__(self, bucket, bucket_location, filename, aws_access_key_id, aws_secret_access_key):
+        self._bucket = bucket
+        self._bucket_location = bucket_location
+        self._filename = filename
+        self._aws_access_key_id = aws_access_key_id
+        self._aws_secret_access_key = aws_secret_access_key
+
+    def __call__(self):
+        # noinspection PyBroadException
+        try:
+            s3_helper = S3Helper(self._aws_access_key_id, self._aws_secret_access_key)
+            LOGGER.info('Copying to: {0}/{1}/measurement_set.tar'.format(self._bucket, self._bucket_location))
 
             # We can have 10,000 parts
             # The biggest file from Semester 1 is 803GB
             # So 100 MB
             s3_helper.add_tar_to_bucket_multipart(
-                args.bucket,
-                '{0}/measurement_set.tar'.format(match),
-                result_dir,
-                parallel_processes=4,
+                self._bucket,
+                '{0}/measurement_set.tar'.format(self._bucket_location),
+                self._filename,
+                parallel_processes=2,
                 bufsize=100*1024*1024
             )
+        except Exception:
+            LOGGER.exception('CopyTask died')
+
+
+def copy_files(args):
+    # Create the queue
+    queue = multiprocessing.JoinableQueue()
+    # Start the consumers
+    for x in range(PROCESSES):
+        consumer = Consumer(queue)
+        consumer.start()
+
+    # Look in the output directory
+    for root, dir_names, filenames in os.walk(args.product_dir):
+        LOGGER.debug('root: {0}, dir_names: {1}, filenames: {2}'.format(root, dir_names, filenames))
+        for match in fnmatch.filter(dir_names, '13B-266*calibrated_deepfield.ms'):
+            result_dir = join(root, match)
+            LOGGER.info('Queuing result_dir: {0}'.format(result_dir))
+
+            queue.put(
+                CopyTask(
+                    args.bucket,
+                    match,
+                    result_dir,
+                    args.aws_access_key_id,
+                    args.aws_secret_access_key
+                )
+            )
+
+    # Add a poison pill to shut things down
+    for x in range(PROCESSES):
+        queue.put(None)
+
+    # Wait for the queue to terminate
+    queue.join()
 
 
 def main():
