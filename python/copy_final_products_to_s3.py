@@ -47,11 +47,15 @@ def copy_files(args):
             LOG.info('result_dir: {0}'.format(result_dir))
             LOG.info('Copying to: {0}/{1}/measurement_set.tar'.format(args.bucket, match))
 
+            # We can have 10,000 parts
+            # The biggest file from Semester 1 is 803GB
+            # So 100 MB
             s3_helper.add_tar_to_bucket_multipart(
                 args.bucket,
                 '{0}/measurement_set.tar'.format(match),
                 result_dir,
-                parallel_processes=2
+                parallel_processes=4,
+                bufsize=100*1024*1024
             )
 
 

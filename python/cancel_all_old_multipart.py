@@ -43,26 +43,19 @@ def main():
     parser = argparse.ArgumentParser('Check the multipart upload status')
     parser.add_argument('-c', '--cancel', action="store_true", help='cancel all the outstanding ')
     parser.add_argument('-f', '--force', action="store_true", help='force all the outstanding ')
-    parser.add_argument('project', help='the project')
 
     args = vars(parser.parse_args())
 
     if exists(join(expanduser('~'), '.aws/credentials')):
         # This relies on a ~/.aws/credentials file holding the '<aws access key>', '<aws secret key>'
         LOG.info("Using ~/.aws/credentials")
-        if args['project'] == 'aws-chiles02':
-            s3_connection = boto.connect_s3(profile_name='aws-chiles02')
-        else:
-            s3_connection = boto.connect_s3(profile_name='chiles')
+        s3_connection = boto.connect_s3(profile_name='chiles')
     else:
         # This relies on a ~/.boto or /etc/boto.cfg file holding the '<aws access key>', '<aws secret key>'
         LOG.info("Using ~/.boto or /etc/boto.cfg")
         s3_connection = boto.connect_s3()
 
-    if args['project'] == 'aws-chiles02':
-        bucket = s3_connection.get_bucket('13b-266')
-    else:
-        bucket = s3_connection.get_bucket(CHILES_BUCKET_NAME)
+    bucket = s3_connection.get_bucket(CHILES_BUCKET_NAME)
 
     one_day_ago = datetime.datetime.now() - datetime.timedelta(hours=24)
     for item in bucket.list_multipart_uploads():
